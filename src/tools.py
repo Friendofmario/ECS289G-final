@@ -17,6 +17,7 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import random
 
 def goodness_fun(x, method):
     if method == "MSE":
@@ -66,7 +67,7 @@ def base_loss(X_pos: torch.Tensor, X_neg: torch.Tensor, th: float, method: str) 
     return loss
 
 
-def generate_positive_negative_samples_overlay(X: torch.Tensor, Y: torch.Tensor, only_positive: bool) -> Tuple[torch.Tensor]:
+def generate_positive_negative_samples_overlay(X: torch.Tensor, Y: torch.Tensor, num_classes: int, only_positive: bool, replace: bool = True) -> Tuple[torch.Tensor]:
     """Generate positive and negative samples using labels. It overlays labels in input. For neg it does
     the same but with shuffled labels.
 
@@ -80,17 +81,29 @@ def generate_positive_negative_samples_overlay(X: torch.Tensor, Y: torch.Tensor,
     """
     X_pos = X.clone()
 
-    X_pos[:, :10] *= 0.0
-    X_pos[range(X.shape[0]), Y] = X_pos.max()  # one hot
+    if (replace):
+        X_pos[:, :num_classes] *= 0.0
+        X_pos[range(X.shape[0]), Y] = X_pos.max()  # one hot
+    else:
+        X_pos = F.pad(X_pos, (num_classes, 0), 'constant', 0)
+        X_pos[range(X.shape[0]), Y] = X_pos.max()  # one hot
 
     if only_positive:
         return X_pos
     else:
         X_neg = X.clone()
         rnd = torch.randperm(X_neg.size(0))
-        # Y_neg = (Y + torch.randint(1, (Y.max()-1), (Y.shape[0],))) % Y.max() # still don't get why does not work
         Y_neg = Y[rnd]
-        X_neg[:, :10] *= 0.0
-        X_neg[range(X_neg.shape[0]), Y_neg] = X_neg.max()  # one hot
+
+        for i in range(Y_neg):
+            while Y_neg[i] == Y[i]:
+                Y_neg[i] = random.randint(num_classes)
+
+        if (replace):
+            X_neg[:, :num_classes] *= 0.0
+            X_neg[range(X_neg.shape[0]), Y_neg] = X_neg.max()  # one hot
+        else:
+            X_neg = F.pad(X_neg, (num_classes, 0), 'constant', 0)
+            X_neg[range(X.shape[0]), Y_neg] = X_neg.max()  # one hot
 
         return X_pos, X_neg
