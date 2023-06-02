@@ -32,7 +32,7 @@ class FFSequentialModel(ABC):
     def __init__(self):
         self.layers = []  # store layers
 
-    def predict_accomulate_goodness(self, X: torch.Tensor, pos_gen_fn: Callable, n_class: int = None) -> torch.Tensor:
+    def predict_accumulate_goodness(self, X: torch.Tensor, pos_gen_fn: Callable, n_class: int = None) -> torch.Tensor:
         """Use the network to make predictions on a batch of samples. It makes use of pos_gen_fn function
         to overlay labels on samples.
 
@@ -46,7 +46,7 @@ class FFSequentialModel(ABC):
         """
         goodness_per_label = []
         for label in range(n_class):
-            h = pos_gen_fn(X, label, True)
+            h = pos_gen_fn(X, label, num_classes=n_class, only_positive=True, replace= self.replace)
             goodness = []
             for layer in self.layers:
                 h = layer(h)
@@ -103,7 +103,7 @@ class FFMultiLayerPerceptron(Module, FFSequentialModel):
     """
 
     def __init__(self, hidden_dimensions: List, activation: torch.nn, optimizer: torch.optim,
-                 layer_optim_learning_rate: float, threshold: float, loss_fn: Callable, method: str):
+                 layer_optim_learning_rate: float, threshold: float, loss_fn: Callable, method: str, replace=bool):
         """Initialize MLP model
 
         Args:
@@ -118,6 +118,8 @@ class FFMultiLayerPerceptron(Module, FFSequentialModel):
         super(FFMultiLayerPerceptron, self).__init__()
         self.method = method
         self.layers = torch.nn.ModuleList()
+        self.replace = replace
+
         for i in range(len(hidden_dimensions) - 1):
             self.layers += [FFLinear(hidden_dimensions[i],
                                      hidden_dimensions[i + 1],
