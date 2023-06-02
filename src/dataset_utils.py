@@ -147,9 +147,12 @@ class BreastCancerDataset(Dataset):
 
 class BreastCancerLoader(DatasetLoader):
     def __init__(self, data_path: str = 'data/BreastCancer/breastcancer_data.csv'):
-        df = pd.read_csv(data_path)
-        train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+        super(BreastCancerLoader, self).__init__()
+        self.download_path = data_path 
 
+    def download_dataset(self) -> None:
+        df = pd.read_csv(self.download_path)
+        train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
         self.train_set = BreastCancerDataset(train_df)
         self.test_set = BreastCancerDataset(test_df)
 
