@@ -95,9 +95,9 @@ def generate_positive_negative_samples_overlay(X: torch.Tensor, Y: torch.Tensor,
         rnd = torch.randperm(X_neg.size(0))
         Y_neg = Y[rnd]
 
-        for i in range(Y_neg):
+        for i in range(len(Y_neg)):
             while Y_neg[i] == Y[i]:
-                Y_neg[i] = random.randint(num_classes)
+                Y_neg[i] = random.randint(0, num_classes)
 
         if (replace):
             X_neg[:, :num_classes] *= 0.0
