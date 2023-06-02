@@ -172,3 +172,70 @@ class MultiLayerPerceptron(Module):
             x = self.activation(x)
         x = self.layers[-1](x)
         return x
+
+#class FFCNN(nn.Module, FFSequentialModel):
+#    """MLP model Forward-Forward compatible
+#    """
+#
+#    def __init__(self, hidden_dimensions: List, activation: torch.nn, optimizer: torch.optim,
+#                 layer_optim_learning_rate: float, threshold: float, loss_fn: Callable, method: float):
+#        """Initialize MLP model
+#
+#        Args:
+#            hidden_dimensions (List): list with hidden dimensions. First dim is the input
+#            activation (torch.nn): activation for each layer
+#            optimizer (torch.optim): layer level optimizer
+#            layer_optim_learning_rate (float): learning rate TODO: Future implementaton should not have it here. Create class loss
+#            threshold (float): loss function threshold
+#            loss_fn (Callable): layer level loss function
+#        """
+#        super(FFCNN, self).__init__()
+#        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
+#        self.pool = nn.MaxPool2d(kernel_size=2, stride=3)
+#        self.conv2 = nn.Conv2d(16, 32, kernel_size=2, stride=2)
+#        self.fc = nn.Linear(32 * 7 * 7, 10)
+#        self.layers = torch.nn.ModuleList()
+#        for i in range(len(hidden_dimensions) - 1):
+#            self.layers += [FFLinear(hidden_dimensions[i],
+#                                     hidden_dimensions[i + 1],
+#                                     activation,
+#                                     optimizer,
+#                                     layer_optim_learning_rate,
+#                                     threshold,
+#                                     loss_fn, method)]
+#    def forward(self, x: torch.Tensor) -> torch.Tensor:
+#        """Model forward function
+#
+#        Args:
+#            x (torch.Tensor): input tensor
+#
+#        Returns:
+#            torch.Tensor: output tensor
+#        """
+#        for layer in self.layers:
+#            x = F.relu(self.conv[layer](x))
+#            x = layer(x)
+#        return x
+#
+#class CNN(nn.Module):
+#    def __init__(self, hidden_dimensions: List, activation: torch.nn):
+#        super(CNN, self).__init__()
+#        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size)
+#        self.relu1 = nn.ReLU()
+#        self.pool1 = nn.MaxPool2d(kernel_size)
+#        self.conv2 = nn.Conv2d(in_channels, out_channels, kernel_size)
+#        self.relu2 = nn.ReLU()
+#        self.pool2 = nn.MaxPool2d(kernel_size)
+#        self.fc1 = nn.Linear(in_features, hidden_size)
+#        self.relu3 = nn.ReLU()
+#        self.fc2 = nn.Linear(hidden_size, num_classes)
+#        self.softmax = nn.Softmax(dim=1)
+#        
+#    def forward(self, x):
+#        x = self.pool1(self.relu1(self.conv1(x)))
+#        x = self.pool2(self.relu2(self.conv2(x)))
+#        x = x.view(x.size(0), -1)  # Flatten the feature maps
+#        x = self.relu3(self.fc1(x))
+#        x = self.fc2(x)
+#        x = self.softmax(x)
+#        return x

@@ -15,12 +15,31 @@
 from typing import Tuple
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 def goodness_fun(x, method):
     if method == "MSE":
         return x.pow(2).mean(1)
     elif method == "MAE":
         return x.abs().mean(1)
+    elif method == "cos_sim":
+        return 1 - nn.functional.cosine_similarity(x, x.mean(0, keepdim=True), dim=1)
+    elif method == "logcosh":
+        return torch.log(torch.cosh(x)).mean(1)
+   # Hubers with different deltas
+    elif method == "huber1":
+        delta = 1
+        return nn.functional.smooth_l1_loss(x, torch.zeros_like(x), reduction='none', beta=delta).sum(1)
+    elif method == "huber2":
+        delta = 2
+        return nn.functional.smooth_l1_loss(x, torch.zeros_like(x), reduction='none', beta=delta).sum(1)
+    elif method == "huber0.5":
+        delta = 0.5
+        return nn.functional.smooth_l1_loss(x, torch.zeros_like(x), reduction='none', beta=delta).sum(1)
+        # Broken
+#    elif method == "cross_entropy":
+#        return F.cross_entropy(x, torch.argmax(x, dim=1))
 
 def base_loss(X_pos: torch.Tensor, X_neg: torch.Tensor, th: float, method: str) -> torch.Tensor:
     """Base loss described in the paper. Log(1+exp(x)) is added to help differentiation.

@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 
 import torch
 import torchvision
-from torchvision.datasets import MNIST, CIFAR10
+from torchvision.datasets import MNIST, CIFAR10, EMNIST, CIFAR100
 from torch.utils.data import DataLoader
 
 
@@ -123,6 +123,33 @@ class CIFAR10Loader(DatasetLoader):
                               transform=self.test_transform)
 
 
+class EMNISTLoader(DatasetLoader):
+    def __init__(self, train_transform: torchvision.transforms, test_transform: torchvision.transforms, download_path: str = './tmp'):
+        """Initialize MNIST Dataset Loader
+
+        Args:
+            train_transform (torchvision.transforms): transformations to be applied to training set
+            test_transform (torchvision.transforms): transformations to be applied to test set
+            download_path (str, optional): download path. Defaults to './tmp'.
+        """
+        super(EMNISTLoader, self).__init__()
+
+        self.train_transform = train_transform
+        self.test_transform = test_transform
+
+        self.download_path = download_path
+
+    def download_dataset(self) -> None:
+        """Download dataset to the given path
+        """
+        self.train_set = EMNIST(self.download_path, split="balanced", train=True,
+                               download=True,
+                               transform=self.train_transform)
+
+        self.test_set = EMNIST(self.download_path, split="balanced", train=False,
+                              download=True,
+                              transform=self.test_transform)
+
 
 
 class TrainingDatasetFF(torch.utils.data.Dataset):
@@ -148,3 +175,34 @@ class TrainingDatasetFF(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.dataset)
+
+class CIFAR100Loader(DatasetLoader):
+    """MNIST PyTorch Dataset Loader
+    """
+
+    def __init__(self, train_transform: torchvision.transforms, test_transform: torchvision.transforms, download_path: str = './tmp'):
+        """Initialize MNIST Dataset Loader
+
+        Args:
+            train_transform (torchvision.transforms): transformations to be applied to training set
+            test_transform (torchvision.transforms): transformations to be applied to test set
+            download_path (str, optional): download path. Defaults to './tmp'.
+        """
+        super(CIFAR100Loader, self).__init__()
+
+        self.train_transform = train_transform
+        self.test_transform = test_transform
+
+        self.download_path = download_path
+
+    def download_dataset(self) -> None:
+        """Download dataset to the given path
+        """
+        self.train_set = CIFAR100(self.download_path, train=True,
+                               download=True,
+                               transform=self.train_transform)
+
+        self.test_set = CIFAR100(self.download_path, train=False,
+                              download=True,
+                              transform=self.test_transform)
+
