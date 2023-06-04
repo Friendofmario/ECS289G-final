@@ -66,7 +66,7 @@ def base_loss(X_pos: torch.Tensor, X_neg: torch.Tensor, th: float, method: str) 
     return loss
 
 
-def generate_positive_negative_samples_overlay(X: torch.Tensor, Y: torch.Tensor, only_positive: bool) -> Tuple[torch.Tensor]:
+def generate_positive_negative_samples_overlay(X: torch.Tensor, Y: torch.Tensor, only_positive: bool, n_classes: int) -> Tuple[torch.Tensor]:
     """Generate positive and negative samples using labels. It overlays labels in input. For neg it does
     the same but with shuffled labels.
 
@@ -80,7 +80,7 @@ def generate_positive_negative_samples_overlay(X: torch.Tensor, Y: torch.Tensor,
     """
     X_pos = X.clone()
 
-    X_pos[:, :10] *= 0.0
+    X_pos[:, :n_classes] *= 0.0
     X_pos[range(X.shape[0]), Y] = X_pos.max()  # one hot
 
     if only_positive:
@@ -90,7 +90,7 @@ def generate_positive_negative_samples_overlay(X: torch.Tensor, Y: torch.Tensor,
         rnd = torch.randperm(X_neg.size(0))
         # Y_neg = (Y + torch.randint(1, (Y.max()-1), (Y.shape[0],))) % Y.max() # still don't get why does not work
         Y_neg = Y[rnd]
-        X_neg[:, :10] *= 0.0
+        X_neg[:, :n_classes] *= 0.0
         X_neg[range(X_neg.shape[0]), Y_neg] = X_neg.max()  # one hot
 
         return X_pos, X_neg

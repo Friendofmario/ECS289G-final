@@ -32,7 +32,7 @@ class FFSequentialModel(ABC):
     def __init__(self):
         self.layers = []  # store layers
 
-    def predict_accomulate_goodness(self, X: torch.Tensor, pos_gen_fn: Callable,method: str, n_class: int = None) -> torch.Tensor:
+    def predict_accomulate_goodness(self, X: torch.Tensor, pos_gen_fn: Callable, n_class: int ,method: str) -> torch.Tensor:
         """Use the network to make predictions on a batch of samples. It makes use of pos_gen_fn function
         to overlay labels on samples.
 
@@ -46,7 +46,7 @@ class FFSequentialModel(ABC):
         """
         goodness_per_label = []
         for label in range(n_class):
-            h = pos_gen_fn(X, label, True)
+            h = pos_gen_fn(X, label, True, n_class)
             goodness = []
             for layer in self.layers:
                 h = layer(h)
