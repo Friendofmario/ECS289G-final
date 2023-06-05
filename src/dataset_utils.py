@@ -19,6 +19,12 @@ import torchvision
 from torchvision.datasets import MNIST, CIFAR10, EMNIST, CIFAR100
 from torch.utils.data import DataLoader
 
+import pandas as pd
+from torch.utils.data import Dataset
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
 
 class DatasetLoader(ABC):
     """Generic PyTorch Dataset Loader
@@ -121,6 +127,34 @@ class CIFAR10Loader(DatasetLoader):
         self.test_set = CIFAR10(self.download_path, train=False,
                               download=True,
                               transform=self.test_transform)
+
+class BreastCancerDataset(Dataset):
+    def __init__(self, csv_file):
+        self.data = csv_file
+        # Create a StandardScaler object
+        scaler = StandardScaler()
+        self.features = scaler.fit_transform(self.data.drop(columns=['diagnosis', 'id', 'Unnamed: 32']).values)
+        encoder = LabelEncoder()
+        self.labels = encoder.fit_transform(self.data['diagnosis'].values)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        features = torch.tensor(self.features[index], dtype=torch.float32)
+        label = torch.tensor(self.labels[index])
+        return features, label
+
+class BreastCancerLoader(DatasetLoader):
+    def __init__(self, data_path: str = 'data/BreastCancer/breastcancer_data.csv'):
+        super(BreastCancerLoader, self).__init__()
+        self.download_path = data_path 
+
+    def download_dataset(self) -> None:
+        df = pd.read_csv(self.download_path)
+        train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+        self.train_set = BreastCancerDataset(train_df)
+        self.test_set = BreastCancerDataset(test_df)
 
 
 class EMNISTLoader(DatasetLoader):

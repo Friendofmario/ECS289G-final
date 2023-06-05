@@ -24,7 +24,7 @@ class FFLinear(Linear):
 
     def __init__(self, in_features: int, out_features: int, activation: torch.nn,
                  optimizer: torch.optim, layer_optim_learning_rate: float, threshold: float, loss_fn: Callable,
-                 bias: bool = True):
+                 method: str = "MSE", bias: bool = True):
         """Initialize layer
 
         Args:
@@ -43,9 +43,10 @@ class FFLinear(Linear):
         self.optimizer = optimizer(self.parameters(), lr=layer_optim_learning_rate)
         self.threshold = threshold
         self.loss_fn = loss_fn
+        self.method = method
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Model forwoard function
+        """Model forward function
 
         Args:
             x (torch.Tensor): input tensor
@@ -58,7 +59,7 @@ class FFLinear(Linear):
             torch.mm(x, self.weight.T) +
             self.bias.unsqueeze(0))
 
-    def train_layer(self, X_pos: torch.Tensor, X_neg: torch.Tensor, before: bool, method: str) -> Tuple[torch.Tensor, torch.Tensor, int]:
+    def train_layer(self, X_pos: torch.Tensor, X_neg: torch.Tensor, before: bool) -> Tuple[torch.Tensor, torch.Tensor, int]:
         """Train layer with FF algorithm
 
         Args:
@@ -72,7 +73,7 @@ class FFLinear(Linear):
         X_pos_out = self.forward(X_pos)
         X_neg_out = self.forward(X_neg)
 
-        loss = self.loss_fn(X_pos_out, X_neg_out, self.threshold, method)
+        loss = self.loss_fn(X_pos_out, X_neg_out, self.threshold, self.method)
 
         self.optimizer.zero_grad()
 
