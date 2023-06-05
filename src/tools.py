@@ -82,8 +82,12 @@ def generate_positive_negative_samples_overlay(X: torch.Tensor, Y: torch.Tensor,
     X_pos = X.clone()
 
     if (replace):
-        X_pos[:, :num_classes] *= 0.0
-        X_pos[range(X.shape[0]), Y] = X_pos.max()  # one hot
+        if (len(X_pos.shape) == 4):
+            X_pos[:, :, :num_classes] *= 0.0
+            X_pos[:, range(X.shape[1]), Y] = X_pos.max()
+        else:
+            X_pos[:, :num_classes] *= 0.0
+            X_pos[range(X.shape[0]), Y] = X_pos.max()  # one hot
     else:
         X_pos = F.pad(X_pos, (num_classes, 0), 'constant', 0)
         X_pos[range(X.shape[0]), Y] = X_pos.max()  # one hot
@@ -100,8 +104,12 @@ def generate_positive_negative_samples_overlay(X: torch.Tensor, Y: torch.Tensor,
                 Y_neg[i] = random.randint(0, num_classes)
 
         if (replace):
-            X_neg[:, :num_classes] *= 0.0
-            X_neg[range(X_neg.shape[0]), Y_neg] = X_neg.max()  # one hot
+            if (len(X_neg.shape) == 4):
+                X_neg[:, :, :num_classes] *= 0.0
+                X_neg[:, range(X_neg.shape[1]), Y_neg] = X_neg.max()  # one hot
+            else:
+                X_neg[:, :num_classes] *= 0.0
+                X_neg[range(X_neg.shape[0]), Y_neg] = X_neg.max()  # one hot
         else:
             X_neg = F.pad(X_neg, (num_classes, 0), 'constant', 0)
             X_neg[range(X.shape[0]), Y_neg] = X_neg.max()  # one hot

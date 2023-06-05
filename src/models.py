@@ -17,7 +17,7 @@ from typing import List, Callable
 
 import torch
 from tqdm.notebook import tqdm
-from layers import FFLinear
+from layers import FFLinear, FFConv2d, FFMaxPool2d
 from torch.nn import Module, Linear
 from torch.utils.data import DataLoader
 from dataset_utils import TrainingDatasetFF
@@ -50,7 +50,9 @@ class FFSequentialModel(ABC):
             goodness = []
             for layer in self.layers:
                 h = layer(h)
-                goodness += [goodness_fun(h, self.method)]#[h.pow(2).mean(1)]
+                if (len(h.shape) > 2):
+                    tmp_h = h.view(h.size(0), -1)
+                goodness += [goodness_fun(tmp_h, self.method)] #[h.pow(2).mean(1)]
             goodness_per_label += [sum(goodness).unsqueeze(1)]
         goodness_per_label = torch.cat(goodness_per_label, 1)
         return goodness_per_label.argmax(1)
@@ -178,32 +180,35 @@ class MultiLayerPerceptron(Module):
         return x
 
 class FFCNN(Module, FFSequentialModel):
-    def __init__(self, hidden_dimensions: List[int], activation: torch.nn, optimizer: torch.optim,
-                 layer_optim_learning_rate: float, threshold: float, loss_fn: Callable, method: str, num_classes: int, kernel_size: int):
+    def __init__(self, hidden_dimensions: List[int], activation: torch.nn, optimizer: torch.optim, layer_optim_learning_rate: float, 
+                 threshold: float, loss_fn: Callable, method: str, kernel_size: int, replace: bool):
         super(FFCNN, self).__init__()
-        self.conv_layers = torch.nn.ModuleList()
-        self.pool_layers = torch.nn.ModuleList()
-
-        previous_dim = hidden_dimensions[0]
-        for dim in hidden_dimensions[1:-1]:
-            self.conv_layers.append(torch.nn.Conv2d(previous_dim, dim, kernel_size=kernel_size, padding=1))
-            self.pool_layers.append(torch.nn.MaxPool2d(kernel_size=kernel_size, stride=2))
-            previous_dim = dim
-        self.fc_input_size = hidden_dimensions[-2] // (2 ** (len(hidden_dimensions) - 3))  # Adjust for pooling layers
-        self.fc1 = torch.nn.Linear(hidden_dimensions[-2], hidden_dimensions[-1])
-        self.relu = activation
-        self.fc2 = torch.nn.Linear(hidden_dimensions[-1], num_classes)
-        self.softmax = torch.nn.Softmax(dim=1)
-
         self.layers = torch.nn.ModuleList()
-        for i in range(len(hidden_dimensions) - 3):
-            self.layers.append(FFLinear(hidden_dimensions[i], hidden_dimensions[i + 1],
-                                        activation, optimizer, layer_optim_learning_rate,
-                                        threshold, loss_fn, method))
+        self.method = method
+        self.replace = replace
+
+        stride = 1
+
+        for i in range(len(hidden_dimensions) - 4):
+            self.layers.append(FFConv2d(hidden_dimensions[i], hidden_dimensions[i + 1], kernel_size, 
+                                             stride, activation, optimizer, layer_optim_learning_rate,
+                                             threshold, loss_fn, method))
+            self.layers.append(FFMaxPool2d(2, 2))
+
+        self.layers.append(FFLinear(hidden_dimensions[-4] * 5 * 5, hidden_dimensions[-3],
+                                    activation, optimizer, layer_optim_learning_rate,
+                                    threshold, loss_fn, method))
+
+        self.layers.append(FFLinear(hidden_dimensions[-3], hidden_dimensions[-2],
+                                    activation, optimizer, layer_optim_learning_rate,
+                                    threshold, loss_fn, method))
+        
+        self.layers.append(FFLinear(hidden_dimensions[-2], hidden_dimensions[-1],
+                                    activation, optimizer, layer_optim_learning_rate,
+                                    threshold, loss_fn, method))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         for layer in self.layers:
-            x = self.activation(self.conv[layer](x))
             x = layer(x)
         return x
 
