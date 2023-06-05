@@ -50,6 +50,8 @@ class FFSequentialModel(ABC):
             goodness = []
             for layer in self.layers:
                 h = layer(h)
+                tmp_h = h
+
                 if (len(h.shape) > 2):
                     tmp_h = h.view(h.size(0), -1)
                 goodness += [goodness_fun(tmp_h, self.method)] #[h.pow(2).mean(1)]
