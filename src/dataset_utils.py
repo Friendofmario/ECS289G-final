@@ -157,6 +157,37 @@ class BreastCancerLoader(DatasetLoader):
         self.test_set = BreastCancerDataset(test_df)
 
 
+class WineQualityDataset(Dataset):
+    def __init__(self, csv_file):
+        self.data = csv_file
+        # Create a StandardScaler object
+        scaler = StandardScaler()
+        self.features = scaler.fit_transform(self.data.values)
+        encoder = LabelEncoder()
+        self.labels = encoder.fit_transform(self.data['quality'].values)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        features = torch.tensor(self.features[index], dtype=torch.float32)
+        label = torch.tensor(self.labels[index])
+        return features, label
+
+class WineQualityLoader(DatasetLoader):
+    def __init__(self, data_path: str = 'data/WineQuality/winequality-red.csv'):
+        super(WineQualityLoader, self).__init__()
+        self.download_path = data_path 
+
+    def download_dataset(self) -> None:
+        df = pd.read_csv(self.download_path)
+        dataset = WineQualityDataset(df)
+
+        train_size = int(0.8 * len(dataset))
+        test_size = len(dataset) - train_size
+        self.train_set, self.test_set = torch.utils.data.random_split(dataset, [train_size, test_size])
+
+
 class EMNISTLoader(DatasetLoader):
     def __init__(self, train_transform: torchvision.transforms, test_transform: torchvision.transforms, download_path: str = './tmp'):
         """Initialize MNIST Dataset Loader
