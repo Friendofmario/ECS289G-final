@@ -38,6 +38,10 @@ def goodness_fun(x, method):
     elif method == "huber0.5":
         delta = 0.5
         return nn.functional.smooth_l1_loss(x, torch.zeros_like(x), reduction='none', beta=delta).sum(1)
+    elif method == "min":
+        return x.min(1)
+    elif method == "max":
+        return x.max(1)
         # Broken
 #    elif method == "cross_entropy":
 #        return F.cross_entropy(x, torch.argmax(x, dim=1))
@@ -53,8 +57,14 @@ def base_loss(X_pos: torch.Tensor, X_neg: torch.Tensor, th: float, method: str) 
     Returns:
         torch.Tensor: output loss
     """
+    if method == "minmax":
+        method = "min"
     logits_pos = goodness_fun(X_pos, method)#X_pos.pow(2).mean(dim=1)
+    if method == "min":
+        method = "max"
     logits_neg = goodness_fun(X_neg, method)#X_neg.pow(2).mean(dim=1)
+    if method == "max":
+        method == "minmax"
 
     loss_pos = - logits_pos + th
     loss_neg = logits_neg - th
